@@ -24,20 +24,22 @@ export default function handler(req, res) {
   const gameType = source.game || "PREMIUM";
   const userKey = source.user_key || "DxCrack";
   
-  // ڈیفالٹ سیریل (اگر ایپ نے نہیں بھیجی تو یہ استعمال ہوگی)
+  // ڈیفالٹ سیریل (اگر ایپ نے نہیں بھیجی)
   const defaultSerial = "670e6fa4-e3d7-3b02-a54b-d4960267b76d";
   const serialKey = source.serial || defaultSerial;
 
   // ---------------------------------------------------------
-  // 3. THE CRACKED LOGIC (MD5 of SERIAL Only)
+  // 3. LOGIC GENERATION
   // ---------------------------------------------------------
   
-  // ٹوکن بنانے کا صحیح طریقہ: صرف سیریل کی کا MD5 ہیش بنائیں
-  const correctToken = crypto.createHash('md5').update(serialKey).digest("hex");
-
-  // Real String
+  // Step 1: اصلی سٹرنگ بنائیں
+  // Formula: GAME - USER - SERIAL - DIAMONDYT
   const generatedRealString = `${gameType}-${userKey}-${serialKey}-DIAMONDYT`;
   
+  // Step 2: ٹوکن جنریشن (CRACKED LOGIC)
+  // راز یہ ہے کہ ٹوکن "real string" کا MD5 ہے، نہ کہ صرف سیریل کا
+  const dynamicToken = crypto.createHash('md5').update(generatedRealString).digest("hex");
+
   // RNG Time
   const currentRng = Math.floor(Date.now() / 1000);
 
@@ -48,7 +50,7 @@ export default function handler(req, res) {
     "status": true,
     "data": {
       "real": generatedRealString,
-      "token": correctToken, // <--- اب یہ 100% میچ کرے گا
+      "token": dynamicToken, // <--- اب یہ 100% میچ ہوگا
       "modname": "VIP LOADER",
       "mod_status": "Safe",
       "credit": "D",
@@ -69,6 +71,6 @@ export default function handler(req, res) {
     }
   };
 
-  // Send with Pretty Print
+  // Send with Pretty Print (4 spaces) to match original format
   res.status(200).send(JSON.stringify(responseData, null, 4));
 }
