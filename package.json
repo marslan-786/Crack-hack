@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Serverless API for encrypted OTP generation",
   "type": "module",
-  },
+  
   "dependencies": {
     "axios": "latest",
     "node-fetch": "^3.3.2",
