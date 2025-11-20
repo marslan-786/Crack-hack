@@ -1,21 +1,13 @@
-import crypto from 'crypto'; // MD5 بنانے کے لیے
+import crypto from 'crypto'; 
 
 export default function handler(req, res) {
   // ---------------------------------------------------------
-  // 1. HEADERS MIMIC (LiteSpeed Style)
+  // 1. HEADERS SETUP
   // ---------------------------------------------------------
-  
-  // ہم Vercel کے ڈیفالٹ ہیڈرز کو ہٹا کر اوریجنل جیسے ہیڈرز لگائیں گے
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  
-  // بالکل اوریجنل جیسا Content-Type (بڑے UTF-8 کے ساتھ)
   res.setHeader('Content-Type', 'application/json; charset=UTF-8');
-  
-  // Caching کو بند کرنا ضروری ہے تاکہ ایپ کو ہر بار فریش ڈیٹا ملے
   res.setHeader('Cache-Control', 'no-store, max-age=0, no-cache');
-  
-  // Connection Headers (ایپ کو دھوکہ دینے کے لیے)
   res.setHeader('Connection', 'Keep-Alive');
   res.setHeader('Keep-Alive', 'timeout=5, max=100');
 
@@ -25,32 +17,38 @@ export default function handler(req, res) {
   }
 
   // ---------------------------------------------------------
-  // 2. DATA LOGIC
+  // 2. DATA CAPTURE
   // ---------------------------------------------------------
   const source = req.method === 'POST' ? req.body : req.query;
   
   const gameType = source.game || "PREMIUM";
   const userKey = source.user_key || "DxCrack";
-  const serialKey = source.serial || "670e6fa4-e3d7-3b02-a54b-d4960267b76d";
+  
+  // ڈیفالٹ سیریل (اگر ایپ نے نہیں بھیجی تو یہ استعمال ہوگی)
+  const defaultSerial = "670e6fa4-e3d7-3b02-a54b-d4960267b76d";
+  const serialKey = source.serial || defaultSerial;
 
   // ---------------------------------------------------------
-  // 3. DYNAMIC TOKEN GENERATION (MD5)
+  // 3. THE CRACKED LOGIC (MD5 of SERIAL Only)
   // ---------------------------------------------------------
-  // ہم سیریل اور ٹائم کو ملا کر ایک نیا ہیش بنائیں گے تاکہ ٹوکن ہر بار اصلی لگے
-  const randomString = serialKey + Date.now().toString();
-  const dynamicToken = crypto.createHash('md5').update(randomString).digest("hex");
+  
+  // ٹوکن بنانے کا صحیح طریقہ: صرف سیریل کی کا MD5 ہیش بنائیں
+  const correctToken = crypto.createHash('md5').update(serialKey).digest("hex");
 
+  // Real String
   const generatedRealString = `${gameType}-${userKey}-${serialKey}-DIAMONDYT`;
+  
+  // RNG Time
   const currentRng = Math.floor(Date.now() / 1000);
 
   // ---------------------------------------------------------
-  // 4. FINAL RESPONSE
+  // 4. RESPONSE
   // ---------------------------------------------------------
   const responseData = {
     "status": true,
     "data": {
       "real": generatedRealString,
-      "token": dynamicToken, // <--- اب یہ ہر بار نیا اور اصلی جیسا ہوگا
+      "token": correctToken, // <--- اب یہ 100% میچ کرے گا
       "modname": "VIP LOADER",
       "mod_status": "Safe",
       "credit": "D",
@@ -71,6 +69,6 @@ export default function handler(req, res) {
     }
   };
 
-  // Pretty Print (4 Spaces)
+  // Send with Pretty Print
   res.status(200).send(JSON.stringify(responseData, null, 4));
 }
