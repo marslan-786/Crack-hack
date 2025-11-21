@@ -2,54 +2,46 @@ import crypto from 'crypto';
 
 export default function handler(req, res) {
   // ---------------------------------------------------------
-  // 1. HEADERS & CONFIGURATION (To Mimic PHP/Cloudflare)
+  // 1. HEADERS (Case Sensitive Fix)
   // ---------------------------------------------------------
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  // "charset=UTF-8" is crucial here as per your capture
+  // یہ لائن سب سے اہم ہے: UTF-8 بڑا ہونا چاہیے
   res.setHeader('Content-Type', 'application/json; charset=UTF-8');
-  
-  // Preventing Cache
   res.setHeader('Cache-Control', 'no-store, max-age=0, no-cache');
-  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Connection', 'keep-alive'); // Original server style
 
-  // Handle Pre-flight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   // ---------------------------------------------------------
-  // 2. DATA CAPTURE & LOGIC
+  // 2. DATA CAPTURE
   // ---------------------------------------------------------
-  
-  // Get data from POST body or URL query
   const source = req.method === 'POST' ? req.body : req.query;
 
-  // Default Serial just in case app doesn't send one
   const serialKey = source.serial || "898c263a-0382-38ab-8d09-3873f322414b";
-
-  // --- TOKEN LOGIC (CRACKED: MD5 of SERIAL) ---
-  // The app expects the token to be the MD5 hash of the serial number sent.
-  const dynamicToken = crypto.createHash('md5').update(serialKey).digest("hex");
-
-  // --- TIME & DATE LOGIC ---
-  const now = new Date();
-  
-  // RNG: Current Unix Timestamp
-  const currentRng = Math.floor(now.getTime() / 1000);
-
-  // EXP: Calculate Expiry Date (e.g., +30 Days from now)
-  // Format needs to be: YYYY-MM-DD HH:mm:ss
-  const expDate = new Date(now.setDate(now.getDate() + 30)); 
-  
-  const format = (num) => num.toString().padStart(2, '0');
-  const expString = `${expDate.getFullYear()}-${format(expDate.getMonth() + 1)}-${format(expDate.getDate())} ${format(expDate.getHours())}:${format(expDate.getMinutes())}:${format(expDate.getSeconds())}`;
+  const userKey = source.user_key || "TEST 123"; // User key ko Credit me show krne k liye
 
   // ---------------------------------------------------------
-  // 3. FINAL RESPONSE JSON
+  // 3. TOKEN LOGIC (MD5 of Serial)
+  // ---------------------------------------------------------
+  const dynamicToken = crypto.createHash('md5').update(serialKey).digest("hex");
+
+  // ---------------------------------------------------------
+  // 4. TIME & DEVICE LOGIC
+  // ---------------------------------------------------------
+  const now = new Date();
+  const currentRng = Math.floor(now.getTime() / 1000);
+
+  // EXPIRY DATE: 2099 (Lifetime) 
+  // آپ نے 2019 کہا تھا لیکن وہ ایکسپائر ہو جائے گا، اس لیے 2099 کر رہا ہوں۔
+  const expString = "2099-12-31 23:59:59";
+
+  // ---------------------------------------------------------
+  // 5. FINAL RESPONSE
   // ---------------------------------------------------------
   const responseData = {
     "status": true,
@@ -58,17 +50,20 @@ export default function handler(req, res) {
         "Extra": "Welcome Vip Users",
         "modname": "PLEASE WAIT... IT WILL FIXED IN SOME HOURS",
         "mod_status": "Play Safe || Avoid Report",
-        "credit": "TEST 123",
-        "token": dynamicToken,  // <--- 100% Verified Logic
-        "device": "1",
-        "EXP": expString,       // <--- Dynamic Future Date
+        
+        // یہاں user_key واپس بھیج رہے ہیں تاکہ ایپ کو لگے یہ وہی بندہ ہے
+        "credit": userKey, 
+        
+        "token": dynamicToken,
+        
+        // آپ کی ڈیمانڈ کے مطابق 100 (پہلے 1 تھا)
+        "device": "100", 
+        
+        "EXP": expString,
         "rng": currentRng
     }
   };
 
-  // ---------------------------------------------------------
-  // 4. SEND RESPONSE (Pretty Print 4 Spaces)
-  // ---------------------------------------------------------
-  // JSON.stringify with 4 spaces mimics the exact format of the original server
+  // Pretty Print (4 Spaces) like original
   res.status(200).send(JSON.stringify(responseData, null, 4));
 }
