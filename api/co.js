@@ -23,7 +23,7 @@ export default function handler(req, res) {
           "token": "3619ffaa0a989f6be018e9761cbfa599", 
           "device": "1",
           "EXP": "2025-11-21 18:34:12",
-          "rng": 1763712260
+          "rng": 1763714607
       }
   };
 
